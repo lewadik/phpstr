@@ -426,6 +426,35 @@ After accessing the web interface:
 4. Try changing its access level to "Public Read"
 5. Generate a presigned URL and test access
 
+### 3. API Test (cURL)
+
+Test the REST API functionality:
+
+```bash
+# Basic API info
+curl -X GET http://localhost:8000/api.php
+
+# Upload a file
+curl -X POST \
+  -F "file=@your-file.txt" \
+  -F "key=test/upload.txt" \
+  -F "access_type=private" \
+  http://localhost:8000/api.php
+
+# Upload content directly
+curl -X PUT \
+  -H "Content-Type: application/json" \
+  -d '{"key":"test/content.json","content":"{\"hello\":\"world\"}","access_type":"public-read","content_type":"application/json"}' \
+  http://localhost:8000/api.php
+
+# List files
+curl -X GET http://localhost:8000/api.php/files
+```
+
+For comprehensive examples, run the provided scripts:
+- **Linux/Mac**: `./examples/curl-examples.sh`
+- **Windows**: `examples\curl-examples.bat`
+
 ## Troubleshooting
 
 ### Common Issues
@@ -494,6 +523,13 @@ This will show detailed error messages (disable in production).
 - **Public Read**: Files accessible via direct URL (good for images, documents)
 - **Public Read/Write**: Editable by anyone (use with extreme caution)
 
+### API Access (cURL Support)
+- **REST API**: Full programmatic access via HTTP API
+- **File Upload**: Upload files using cURL or any HTTP client
+- **Content Upload**: Create files directly from JSON data
+- **File Management**: List, delete, and change permissions via API
+- **Authentication**: Optional API key protection
+
 ## Security Best Practices
 
 ### Environment Security
@@ -533,6 +569,129 @@ composer audit
 sudo logrotate -f /etc/logrotate.conf
 ```
 
+## REST API Documentation
+
+The application provides a complete REST API for programmatic access:
+
+### Base URL
+```
+http://your-domain.com/api.php
+```
+
+### Authentication (Optional)
+Set `API_KEY` in your `.env` file to enable API key authentication:
+```env
+API_KEY=your-secret-api-key
+```
+
+Include the API key in requests:
+```bash
+# Header method
+curl -H "X-API-Key: your-secret-api-key" ...
+
+# Query parameter method
+curl "http://localhost:8000/api.php?api_key=your-secret-api-key"
+```
+
+### API Endpoints
+
+#### 1. Get API Information
+```bash
+GET /api.php
+```
+Returns API version, storage type, and available endpoints.
+
+#### 2. Upload File
+```bash
+POST /api.php
+Content-Type: multipart/form-data
+
+Parameters:
+- file: File to upload (required)
+- key: Storage key/path (optional, uses filename if not provided)
+- access_type: private|public-read|public-read-write (default: private)
+- metadata: JSON string with custom metadata (optional)
+```
+
+Example:
+```bash
+curl -X POST \
+  -F "file=@document.pdf" \
+  -F "key=documents/my-doc.pdf" \
+  -F "access_type=private" \
+  -F "metadata={\"author\":\"John Doe\",\"category\":\"reports\"}" \
+  http://localhost:8000/api.php
+```
+
+#### 3. Upload Content
+```bash
+PUT /api.php
+Content-Type: application/json
+
+Body:
+{
+  "key": "path/filename.ext",
+  "content": "file content as string",
+  "access_type": "private|public-read|public-read-write",
+  "content_type": "mime/type"
+}
+```
+
+#### 4. List Files
+```bash
+GET /api.php/files[?prefix=folder/]
+```
+
+#### 5. Change Access Level
+```bash
+PUT /api.php/access
+Content-Type: application/json
+
+Body:
+{
+  "key": "path/filename.ext",
+  "access_type": "private|public-read|public-read-write"
+}
+```
+
+#### 6. Delete File
+```bash
+DELETE /api.php
+Content-Type: application/json
+
+Body:
+{
+  "key": "path/filename.ext"
+}
+```
+
+### Response Format
+All API responses use JSON format:
+
+**Success Response:**
+```json
+{
+  "success": true,
+  "message": "Operation completed",
+  "data": { ... }
+}
+```
+
+**Error Response:**
+```json
+{
+  "error": "Error description"
+}
+```
+
+### cURL Examples
+
+Complete examples are provided in:
+- `examples/curl-examples.sh` (Linux/Mac)
+- `examples/curl-examples.bat` (Windows)
+
+Run these scripts to test all API functionality.
+
 ## File Structure
 
 ```
@@ -542,14 +701,18 @@ sudo logrotate -f /etc/logrotate.conf
 │   ├── LocalS3StorageHelper.php  # Helper for local storage operations
 │   └── StorageFactory.php        # Factory to create storage instances
 ├── public/
-│   ├── index.php                 # Application entry point
+│   ├── index.php                 # Web application entry point
 │   ├── dashboard.php             # Storage dashboard
 │   ├── upload.php                # File upload interface
 │   ├── list.php                  # File management
+│   ├── api.php                   # REST API endpoint
 │   ├── download.php              # Presigned URL handler
 │   ├── access-control.php        # Local file access control
 │   └── files/                    # Local storage files (when using local storage)
 │       └── .htaccess             # Access control for local files
+├── examples/
+│   ├── curl-examples.sh          # cURL examples for Linux/Mac
+│   └── curl-examples.bat         # cURL examples for Windows
 ├── storage/                      # Local storage directory (created automatically)
 │   ├── files/                    # Actual stored files
 │   └── .metadata/                # File metadata and permissions
