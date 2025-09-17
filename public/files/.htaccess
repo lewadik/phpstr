@@ -1,0 +1,4 @@
+# Protect private files - redirect all requests to access control
+RewriteEngine On
+RewriteCond %{REQUEST_FILENAME} -f
+RewriteRule ^(.*)$ ../access-control.php?file=$1 [QSA,L]
