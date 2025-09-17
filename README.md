@@ -502,9 +502,11 @@ curl -X PUT \
 curl -X GET http://localhost:8000/api.php/files
 ```
 
-For comprehensive examples, run the provided scripts:
-- **Linux/Mac**: `./examples/curl-examples.sh`
-- **Windows**: `examples\curl-examples.bat`
+For comprehensive examples, see the examples directory:
+- **Basic Examples**: `./examples/curl-examples.sh` (Linux/Mac) or `examples\curl-examples.bat` (Windows)
+- **Advanced Examples**: `./examples/advanced-curl-examples.sh` - Real-world usage patterns
+- **CLI Tools**: `./examples/s3-aliases.sh` - Linux aliases for easy command-line access
+- **Full Installation**: `./examples/s3-cli-installer.sh` - System-wide CLI with shell completion
 
 ## Troubleshooting
 
@@ -735,13 +737,46 @@ All API responses use JSON format:
 }
 ```
 
-### cURL Examples
+### cURL Examples and CLI Tools
 
-Complete examples are provided in:
+Complete examples and tools are provided:
+
+**Basic Examples:**
 - `examples/curl-examples.sh` (Linux/Mac)
 - `examples/curl-examples.bat` (Windows)
 
-Run these scripts to test all API functionality.
+**Advanced Tools:**
+- `examples/advanced-curl-examples.sh` - Real-world usage patterns
+- `examples/s3-aliases.sh` - Linux CLI aliases for easy access
+- `examples/s3-cli-installer.sh` - System-wide CLI installation
+
+**Quick CLI Setup (Linux/Mac):**
+```bash
+# Source aliases for current session
+source examples/s3-aliases.sh
+
+# Configure API endpoint
+export S3_API_BASE_URL="http://localhost:8000"
+export S3_API_KEY="your-api-key"  # Optional
+
+# Use convenient commands
+s3-upload document.pdf uploads/doc.pdf public-read
+s3-list
+s3-download uploads/doc.pdf
+```
+
+**System-wide Installation:**
+```bash
+# Install CLI tools system-wide with shell completion
+chmod +x examples/s3-cli-installer.sh
+./examples/s3-cli-installer.sh
+
+# Use from anywhere
+s3-storage upload document.pdf uploads/doc.pdf
+s3-storage config set url http://your-server.com:8000
+```
+
+See `examples/README.md` for comprehensive documentation and usage patterns.
 
 ## File Structure
 
@@ -763,9 +798,13 @@ Run these scripts to test all API functionality.
 │   └── files/                    # Local storage files (when using local storage)
 │       └── .htaccess             # Access control for local files
 ├── examples/
-│   ├── curl-examples.sh          # cURL examples for Linux/Mac
-│   ├── curl-examples.bat         # cURL examples for Windows
-│   └── sftp-setup-guide.md       # Complete SFTP setup guide
+│   ├── curl-examples.sh          # Basic cURL examples for Linux/Mac
+│   ├── curl-examples.bat         # Basic cURL examples for Windows
+│   ├── advanced-curl-examples.sh # Advanced usage patterns and scenarios
+│   ├── s3-aliases.sh             # Linux CLI aliases and functions
+│   ├── s3-cli-installer.sh       # System-wide CLI installer
+│   ├── sftp-setup-guide.md       # Complete SFTP setup guide
+│   └── README.md                 # Comprehensive examples documentation
 ├── storage/                      # Local storage directory (created automatically)
 │   ├── files/                    # Actual stored files
 │   └── .metadata/                # File metadata and permissions
