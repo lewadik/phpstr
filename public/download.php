@@ -28,6 +28,18 @@ if ($storageType === 'local') {
         'local_storage_path' => $_ENV['LOCAL_STORAGE_PATH'] ?? './storage',
         'local_base_url' => $_ENV['LOCAL_BASE_URL'] ?? 'http://localhost:8000'
     ];
+} elseif ($storageType === 'sftp') {
+    $config = [
+        'storage_type' => 'sftp',
+        'sftp_host' => $_ENV['SFTP_HOST'],
+        'sftp_port' => $_ENV['SFTP_PORT'] ?? 22,
+        'sftp_username' => $_ENV['SFTP_USERNAME'],
+        'sftp_password' => $_ENV['SFTP_PASSWORD'] ?? null,
+        'sftp_private_key' => $_ENV['SFTP_PRIVATE_KEY'] ?? null,
+        'sftp_private_key_password' => $_ENV['SFTP_PRIVATE_KEY_PASSWORD'] ?? null,
+        'sftp_path' => $_ENV['SFTP_PATH'] ?? '/storage',
+        'sftp_base_url' => $_ENV['SFTP_BASE_URL'] ?? 'http://localhost:8000'
+    ];
 } else {
     $config = [
         'storage_type' => 'aws',
@@ -41,37 +53,34 @@ if ($storageType === 'local') {
 
 $storage = StorageFactory::create($config);
 
-// For local storage, handle presigned URL validation
-if ($storageType === 'local') {
-    use App\LocalS3StorageHelper;
-    
-    $helper = new LocalS3StorageHelper($config['local_storage_path']);
+// For local and SFTP storage, handle presigned URL validation
+if ($storageType === 'local' || $storageType === 'sftp') {
+    $storage = StorageFactory::create($config);
     
     if (!empty($token) && !empty($expires)) {
         // Validate presigned URL
-        if (!$helper->validateAccessToken($key, $token, $expires)) {
+        if (!$storage->validateAccessToken($key, $token, $expires)) {
             http_response_code(403);
             die('Invalid or expired token');
         }
     } else {
         // Check if file is publicly accessible
-        $metadata = $helper->getMetadata($key);
+        $metadata = $storage->getMetadata($key);
         if (!$metadata || $metadata['access_type'] === 'private') {
             http_response_code(403);
             die('Access denied');
         }
     }
 
-    // Get file path and content
-    $filePath = $helper->getFilePath($key, $config['local_storage_path']);
+    // Get file content
+    $content = $storage->getFileContent($key);
     
-    if (!file_exists($filePath)) {
+    if ($content === false) {
         http_response_code(404);
         die('File not found');
     }
 
-    $content = file_get_contents($filePath);
-    $metadata = $helper->getMetadata($key);
+    $metadata = $storage->getMetadata($key);
     
     // Set appropriate headers
     header('Content-Type: ' . ($metadata['content_type'] ?? 'application/octet-stream'));

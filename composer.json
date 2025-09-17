@@ -3,7 +3,8 @@
     "description": "PHP app with S3 storage and public access controls",
     "require": {
         "aws/aws-sdk-php": "^3.0",
-        "vlucas/phpdotenv": "^5.0"
+        "vlucas/phpdotenv": "^5.0",
+        "phpseclib/phpseclib": "^3.0"
     },
     "autoload": {
         "psr-4": {

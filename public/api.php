@@ -41,6 +41,18 @@ if ($storageType === 'local') {
         'local_storage_path' => $_ENV['LOCAL_STORAGE_PATH'] ?? './storage',
         'local_base_url' => $_ENV['LOCAL_BASE_URL'] ?? 'http://localhost:8000'
     ];
+} elseif ($storageType === 'sftp') {
+    $config = [
+        'storage_type' => 'sftp',
+        'sftp_host' => $_ENV['SFTP_HOST'],
+        'sftp_port' => $_ENV['SFTP_PORT'] ?? 22,
+        'sftp_username' => $_ENV['SFTP_USERNAME'],
+        'sftp_password' => $_ENV['SFTP_PASSWORD'] ?? null,
+        'sftp_private_key' => $_ENV['SFTP_PRIVATE_KEY'] ?? null,
+        'sftp_private_key_password' => $_ENV['SFTP_PRIVATE_KEY_PASSWORD'] ?? null,
+        'sftp_path' => $_ENV['SFTP_PATH'] ?? '/storage',
+        'sftp_base_url' => $_ENV['SFTP_BASE_URL'] ?? 'http://localhost:8000'
+    ];
 } else {
     $config = [
         'storage_type' => 'aws',

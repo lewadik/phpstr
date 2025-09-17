@@ -4,7 +4,7 @@ A PHP application that provides S3 storage functionality with different public a
 
 ## Features
 
-- **Multiple Storage Backends**: AWS S3 or Local S3-compatible storage
+- **Multiple Storage Backends**: AWS S3, Local S3-compatible storage, or SFTP remote storage
 - **Multiple Access Types**: Private, Public Read, and Public Read/Write
 - **File Upload**: Upload files directly to storage with chosen access level
 - **Content Upload**: Create files directly from text content
@@ -13,6 +13,7 @@ A PHP application that provides S3 storage functionality with different public a
 - **File Management**: List, delete, and manage objects
 - **Dashboard**: Overview of storage statistics
 - **Local S3 Storage**: Built-in S3-compatible storage system for development or self-hosting
+- **SFTP Remote Storage**: Use any SFTP server as remote storage backend
 
 ## Access Types Explained
 
@@ -28,7 +29,7 @@ A PHP application that provides S3 storage functionality with different public a
   - `mbstring`
   - `openssl`
 - Composer (PHP package manager)
-- AWS S3 bucket or S3-compatible storage service (optional - can use local storage)
+- AWS S3 bucket, S3-compatible storage service, or SFTP server (optional - can use local storage)
 - Web server (Apache, Nginx, or PHP built-in server for development)
 
 ## AWS Setup
@@ -135,6 +136,25 @@ STORAGE_TYPE=local
 # Local Storage Configuration
 LOCAL_STORAGE_PATH=./storage
 LOCAL_BASE_URL=http://localhost:8000
+```
+
+#### For SFTP Remote Storage:
+```env
+# Storage Configuration
+STORAGE_TYPE=sftp
+
+# SFTP Server Configuration
+SFTP_HOST=your-server.example.com
+SFTP_PORT=22
+SFTP_USERNAME=your-username
+SFTP_PASSWORD=your-password
+# OR use SSH key (recommended)
+# SFTP_PRIVATE_KEY=/path/to/private/key
+# SFTP_PRIVATE_KEY_PASSWORD=key-passphrase
+
+# Storage Configuration
+SFTP_PATH=/remote/storage/path
+SFTP_BASE_URL=http://localhost:8000
 ```
 
 ### 3. File Permissions
@@ -309,7 +329,9 @@ sudo certbot --nginx -d s3app.yourdomain.com     # For Nginx
 0 12 * * * /usr/bin/certbot renew --quiet
 ```
 
-## Local S3-Compatible Storage
+## Storage Backend Options
+
+### Local S3-Compatible Storage
 
 The application includes a built-in S3-compatible storage system that works entirely with local files. This is perfect for:
 
@@ -317,6 +339,16 @@ The application includes a built-in S3-compatible storage system that works enti
 - **Self-hosting**: Complete control over your data
 - **Testing**: Isolated testing environment
 - **Cost savings**: No cloud storage costs
+
+### SFTP Remote Storage
+
+Use any SFTP server as your storage backend. This provides:
+
+- **Remote Storage**: Store files on a different server
+- **Shared Storage**: Multiple applications can access the same SFTP server
+- **Existing Infrastructure**: Use current servers and backup systems
+- **Security**: Full control over access and data location
+- **Flexibility**: Works with any server that supports SFTP/SSH
 
 ### Local Storage Features
 
@@ -347,17 +379,18 @@ The application includes a built-in S3-compatible storage system that works enti
    - **Public files**: Direct access via `/files/filename` URLs
    - **Access validation**: Automatic permission checking
 
-### Local vs AWS S3 Comparison
+### Storage Backend Comparison
 
-| Feature | Local Storage | AWS S3 |
-|---------|---------------|---------|
-| Setup Complexity | Minimal | Requires AWS account |
-| Cost | Free | Pay per usage |
-| Scalability | Limited by server | Unlimited |
-| Reliability | Single server | 99.999999999% durability |
-| Access Control | Full support | Full support |
-| Presigned URLs | Token-based | AWS signature |
-| Best For | Development, small projects | Production, large scale |
+| Feature | Local Storage | SFTP Storage | AWS S3 |
+|---------|---------------|--------------|---------|
+| Setup Complexity | Minimal | Medium | Requires AWS account |
+| Cost | Free | Server costs | Pay per usage |
+| Scalability | Limited by server | Server dependent | Unlimited |
+| Reliability | Single server | Server dependent | 99.999999999% durability |
+| Access Control | Full support | Full support | Full support |
+| Presigned URLs | Token-based | Token-based | AWS signature |
+| Network Dependency | No | Yes | Yes |
+| Best For | Development, small projects | Remote storage, shared access | Production, large scale |
 
 ## Testing the Installation
 
@@ -388,6 +421,24 @@ try {
         $storage = StorageFactory::create($config);
         echo "✅ Local storage initialized successfully!\n";
         echo "Storage path: " . $config['local_storage_path'] . "\n";
+        
+    } elseif ($storageType === 'sftp') {
+        $config = [
+            'storage_type' => 'sftp',
+            'sftp_host' => $_ENV['SFTP_HOST'],
+            'sftp_port' => $_ENV['SFTP_PORT'] ?? 22,
+            'sftp_username' => $_ENV['SFTP_USERNAME'],
+            'sftp_password' => $_ENV['SFTP_PASSWORD'] ?? null,
+            'sftp_private_key' => $_ENV['SFTP_PRIVATE_KEY'] ?? null,
+            'sftp_private_key_password' => $_ENV['SFTP_PRIVATE_KEY_PASSWORD'] ?? null,
+            'sftp_path' => $_ENV['SFTP_PATH'] ?? '/storage',
+            'sftp_base_url' => $_ENV['SFTP_BASE_URL'] ?? 'http://localhost:8000'
+        ];
+        
+        $storage = StorageFactory::create($config);
+        echo "✅ SFTP storage connected successfully!\n";
+        echo "SFTP Host: " . $config['sftp_host'] . "\n";
+        echo "Storage path: " . $config['sftp_path'] . "\n";
         
     } else {
         use Aws\S3\S3Client;
@@ -698,6 +749,7 @@ Run these scripts to test all API functionality.
 ├── src/
 │   ├── S3StorageManager.php      # AWS S3 operations class
 │   ├── LocalS3Storage.php        # Local S3-compatible storage class
+│   ├── SftpS3Storage.php         # SFTP remote storage class
 │   ├── LocalS3StorageHelper.php  # Helper for local storage operations
 │   └── StorageFactory.php        # Factory to create storage instances
 ├── public/
@@ -712,7 +764,8 @@ Run these scripts to test all API functionality.
 │       └── .htaccess             # Access control for local files
 ├── examples/
 │   ├── curl-examples.sh          # cURL examples for Linux/Mac
-│   └── curl-examples.bat         # cURL examples for Windows
+│   ├── curl-examples.bat         # cURL examples for Windows
+│   └── sftp-setup-guide.md       # Complete SFTP setup guide
 ├── storage/                      # Local storage directory (created automatically)
 │   ├── files/                    # Actual stored files
 │   └── .metadata/                # File metadata and permissions
